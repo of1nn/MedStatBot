@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Сеанс истёк</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Вы долго бездействовали, и время вашего сеанса истекло.</h1>
+        <div class="d-flex justify-content-center mt-4">
+            {% if is_admin %}
+                <a href="{{ url_for('auntification') }}" class="btn btn-primary btn-lg">Войти в админку</a>
+            {% else %}
+                <a href="{{ url_for('quizzes') }}" class="btn btn-primary btn-lg">На главную</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

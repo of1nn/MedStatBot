@@ -1,0 +1,139 @@
+<!-- Виджет для добавления вопросов из разных категорий к викторине -->
+<div>
+  <select id="categorySelect">
+    <option value="">Выберите категорию</option>
+    {% for category in categories %}
+      <option value="{{ category.id }}">{{ category.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<div id="questionsContainer"></div>
+
+<div>
+  <h3>Отмеченные вопросы:</h3>
+  <ul id="selectedQuestionsList"></ul>
+</div>
+
+<!-- Скрытые поля для хранения выбранных вопросов -->
+<div id="selectedQuestionsHiddenInputs"></div>
+
+<script>
+  // Создаем Set для хранения ID отмеченных вопросов, которые загружены из back-end
+  // (например, при редактировании существующей записи).
+  const selectedQuestions = new Set(
+    {{ selected_questions | tojson | safe }}
+        .map(q => q.id)
+  );
+
+  // Создаем объект для хранения всех доступных вопросов, где ключ — это ID вопроса, а значение — его название.
+  const allQuestionsMap = {};
+  
+  // Инициализируем объект allQuestionsMap с предзагруженными вопросами (например, если запись редактируется).
+  {{ selected_questions | tojson | safe }}.forEach(q => {
+    allQuestionsMap[q.id] = q.title;
+  });
+
+  // Вызываем функции для обновления скрытых полей и списка отмеченных вопросов сразу после инициализации.
+  updateHiddenInputs();
+  updateSelectedQuestionsList();
+
+  // Добавляем обработчик событий на select для выбора категории.
+  // При изменении категории подгружаем вопросы этой категории.
+  document.getElementById('categorySelect').addEventListener('change', async function() {
+    const categoryId = this.value;
+    if (!categoryId) return;
+
+    // Отправляем запрос на сервер, чтобы получить вопросы выбранной категории.
+    const response = await fetch(`/get_questions?category_id=${categoryId}`);
+    const questions = await response.json();
+
+    // Очищаем контейнер для отображения вопросов текущей категории.
+    const questionsContainer = document.getElementById('questionsContainer');
+    questionsContainer.innerHTML = '';
+
+    // Добавляем каждый вопрос из полученного списка в контейнер с чекбоксом.
+    questions.forEach(question => {
+      // Добавляем вопрос в allQuestionsMap для легкого доступа по ID.
+      allQuestionsMap[question.id] = question.title;
+
+      // Создаем элемент для вопроса с чекбоксом.
+      const questionItem = document.createElement('div');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.value = question.id;
+      checkbox.checked = selectedQuestions.has(question.id);
+
+      // Добавляем обработчик для чекбокса, который добавляет или удаляет вопрос из отмеченных.
+      checkbox.addEventListener('change', function() {
+        toggleQuestion(question);
+      });
+
+      // Добавляем чекбокс и название вопроса в элемент questionItem, а затем добавляем его в контейнер.
+      questionItem.appendChild(checkbox);
+      questionItem.appendChild(document.createTextNode(question.title));
+      questionsContainer.appendChild(questionItem);
+    });
+  });
+
+  // Функция для добавления или удаления вопроса из выбранных.
+  function toggleQuestion(question) {
+    if (selectedQuestions.has(question.id)) {
+      selectedQuestions.delete(question.id); // Удаляем вопрос, если он уже выбран.
+    } else {
+      selectedQuestions.add(question.id); // Добавляем вопрос, если он еще не выбран.
+    }
+    updateSelectedQuestionsList(); // Обновляем отображаемый список отмеченных вопросов.
+    updateHiddenInputs(); // Обновляем скрытые поля с текущими выбранными вопросами.
+  }
+
+  // Функция для обновления списка "Отмеченные вопросы".
+  function updateSelectedQuestionsList() {
+    const selectedQuestionsList = document.getElementById('selectedQuestionsList');
+    selectedQuestionsList.innerHTML = ''; // Очищаем текущий список.
+
+    // Добавляем каждый выбранный вопрос в список в виде элемента li.
+    selectedQuestions.forEach(questionId => {
+      const questionItem = document.createElement('li');
+      questionItem.textContent = allQuestionsMap[questionId] || 'Вопрос не найден';
+
+      // Добавляем обработчик события "click" для удаления вопроса из списка.
+      questionItem.addEventListener('click', () => {
+        selectedQuestions.delete(questionId); // Удаляем вопрос из выбранных.
+        updateSelectedQuestionsList(); // Обновляем список отмеченных вопросов.
+        updateHiddenInputs(); // Обновляем скрытые поля.
+
+        // Снимаем галочку с чекбокса в контейнере вопросов, если он отображается
+        const checkbox = document.querySelector(`#questionsContainer input[value="${questionId}"]`);
+        if (checkbox) {
+          checkbox.checked = false; // Снимаем отметку с чекбокса.
+        }
+      });
+
+      selectedQuestionsList.appendChild(questionItem); // Добавляем элемент li в список.
+    });
+  }
+
+  // Функция для обновления скрытых полей, которые отправляются на сервер.
+  // Скрытые поля содержат ID всех выбранных вопросов.
+  function updateHiddenInputs() {
+    const hiddenInputsContainer = document.getElementById('selectedQuestionsHiddenInputs');
+    hiddenInputsContainer.innerHTML = ''; // Очищаем контейнер.
+
+    // Создаем скрытое поле для каждого выбранного вопроса.
+    selectedQuestions.forEach(questionId => {
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = "{{ field_name }}"; // Название поля формы.
+      hiddenInput.value = questionId; // Значение — ID вопроса.
+      hiddenInputsContainer.appendChild(hiddenInput); // Добавляем скрытое поле в контейнер.
+    });
+  }
+
+  // При загрузке страницы вызываем функции, чтобы отобразить начальные данные
+  // и обновить скрытые поля для отправки на сервер.
+  document.addEventListener('DOMContentLoaded', () => {
+    updateSelectedQuestionsList();
+    updateHiddenInputs(); 
+  });
+</script>

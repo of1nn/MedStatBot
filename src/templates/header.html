@@ -1,0 +1,28 @@
+<header class="navbar navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand title" href="{{ url_for('quiz_admin.index_view' if test == 'True' else 'quizzes') }}"
+      >MedStat Solution</a
+    >
+    <div class="d-flex justify-content-end">
+      <a class="nav-link author-icon" href="{{ url_for('quiz_admin.index_view' if test == 'True' else 'profile') }}">
+        <i class="bi bi-person-circle fs-1 author"></i>
+      </a>
+    </div>
+  </div>
+</header>
+<script>
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const inputs = document.querySelectorAll('input[name="csrf_token"]');
+    const csrfToken = getCookie("csrf_access_token");
+    // Перебираем формы и добавляем CSRF-токен
+    inputs.forEach((input) => {
+      input.value = csrfToken;
+    });
+  });
+</script>

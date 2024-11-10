@@ -1,0 +1,171 @@
+{% extends "base.html" %} {% block title %}Профиль пользователя{% endblock title
+%} {% block stylesheets %}
+<link
+  rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+/>
+{% endblock stylesheets %} {% block content %}
+<div class="container">
+  <h3 class="text-center">Профиль пользователя:<br />{{ user.name }}</h3>
+</div>
+
+<div class="container mt-2">
+  <div class="mb-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p class="small text-left">
+          <strong>Общее количество вопросов:</strong>
+          {{ total_questions }}
+          <br />
+          <strong>Количество правильных ответов:</strong>
+          {{correct_answers_count}}
+          <br />
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-section mb-2">
+    <h3 class="text-center">Пройденные викторины</h3>
+
+    {% if quiz_results %}
+    <div class="list-group">
+      {% for result in quiz_results %}
+      <a
+        href="{{ url_for('results', quiz_id=result.quiz.id) }}"
+        class="list-group-item mb-1 list-group-item-action"
+      >
+        <h5 class="text-left">
+          {{ result.quiz.title if result.quiz else 'Нет данных' }}
+        </h5>
+        <p class="small text-left">
+          <strong>Общее количество вопросов:</strong>
+          {{ result.total_questions }}<br />
+          <strong>Количество правильных ответов:</strong>
+          {{result.correct_answers_count }}<br />
+        </p>
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Элементы управления пагинацией -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Пагинация">
+      <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('profile', page=pagination.prev_num) }}" aria-label="Предыдущая">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link" aria-hidden="true">&laquo;</span>
+        </li>
+        {% endif %}
+
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+            {% if p == pagination.page %}
+            <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('profile', page=p) }}">{{ p }}</a></li>
+            {% endif %}
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('profile', page=pagination.next_num) }}" aria-label="Следующая">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link" aria-hidden="true">&raquo;</span>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <p class="text-center">Нет информации о результатах.</p>
+    {% endif %}
+  </div>
+</div>
+<div class="container mt-4" style="background-color: transparent">
+  <div class="text-center btn-container mb-3 d-flex justify-content-center">
+    <a
+      href="/"
+      class="btn btn-primary me-2"
+      style="max-width: 200px; width: 100%"
+      >На главную</a
+    >
+    <form
+      id="delete-profile-form"
+      action="{{ url_for('delete_profile') }}"
+      method="POST"
+      onsubmit="return confirm('Вы уверены, что хотите удалить свой профиль?');"
+      style="display: inline"
+    >
+      <input type="hidden" name="csrf_token" />
+      <button
+        type="submit"
+        class="btn btn-danger"
+        style="max-width: 200px; width: 100%"
+      >
+        Удалить профиль
+      </button>
+    </form>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+  // Обработка отправки формы для удаления профиля
+  document
+    .getElementById("delete-profile-form")
+    .addEventListener("submit", function (event) {
+      event.preventDefault(); // Предотвращаем стандартное поведение формы
+
+      const form = this; // Ссылка на форму
+
+      // Отправляем форму
+      fetch(form.action, {
+        method: form.method,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(new FormData(form)).toString(),
+      })
+        .then((response) => {
+          if (response.ok) {
+            alert("Профиль успешно удален!");
+            closeWebApp(); // Закрытие веб-приложения после успешного удаления
+          } else {
+            alert("Ошибка при удалении профиля");
+          }
+        })
+        .catch((error) => {
+          console.error("Ошибка:", error);
+          alert("Произошла ошибка при удалении профиля");
+        });
+    });
+
+  // Функция для закрытия веб-приложения
+  function closeWebApp() {
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.close();
+    } else {
+      console.log("Telegram Web Apps не поддерживаются в этом окружении.");
+    }
+  }
+</script>
+
+{% endblock content %}

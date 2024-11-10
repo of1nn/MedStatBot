@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container text-center">
+    <h1 class="mb-4">Вопрос</h1>
+    <form method="POST">
+        <!-- Скрытое поле для идентификатора вопроса -->
+        <input type="hidden" name="question_id" value="{{ question.id }}">
+        <input type="hidden" name="csrf_token">
+
+        <!-- Карточка с вопросом -->
+        <div class="card">
+            <div class="card-body">
+                <!-- Отображение рубрики вопроса -->
+                <h6 class="card-subtitle text-muted mb-2">Рубрика: {{ question.category.name }}</h6>
+                
+                <!-- Текст вопроса -->
+                <h5 class="card-title mb-4">{{ question.title }}</h5>
+
+                <!-- Контейнер с ответами -->
+                <div class="answer-container">
+                    {% for answer in answers %}
+                    <div class="answer-label">
+                        <label class="w-100 d-block answer-button-label">
+                            <input type="radio" class="form-check-input d-none answer-button" name="answer" value="{{ answer.id }}">
+                            <span class="answer-text">{{ answer.title }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Кнопки "Назад", "Далее" и "Вернуться в рубрике" -->
+                <div class="mt-4">
+                    <!-- Кнопка "Далее", скрыта до выбора ответа -->
+                    <button id="next-button" type="submit" class="btn btn-primary btn-lg" style="display: none;">Далее</button>
+
+                    <!-- Кнопка "Вернуться в рубрики" -->
+                    <a href="{{ url_for('quiz_admin.index_view' if test == 'True' else 'quizzes') }}" class="btn btn-outline-secondary btn-lg mt-2">
+                        Вернуться к викторинам
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript для отображения кнопки "Далее" при выборе ответа -->
+<script>
+    document.querySelectorAll('.answer-button').forEach((radio) => {
+        radio.addEventListener('change', function() {
+            // Когда выбран ответ, показать кнопку "Далее"
+            document.getElementById('next-button').style.display = 'inline-block';
+        });
+    });
+</script>
+{% endblock content %}
+{% include "csrf_form.html" %}

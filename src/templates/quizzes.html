@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Викторины{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+    <h1 class="text-center">Викторины</h1>
+    <div class="card" style="border: none; box-shadow: none;">
+        <div class="card-body" style="padding: 0;">
+            <div class="list-group">
+                {% for quiz in quizzes %}
+                <a href="{{ url_for('question', quiz_id=quiz.id) }}" class="list-group-item list-group-item-action" style="border: none; border-radius: 4px; color: #000;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ quiz.title }}</h5>
+                        <i class="bi bi-arrow-counterclockwise" style="cursor: pointer;" onclick="resetQuizProgress(event, '{{ url_for('quiz_reload', quiz_id=quiz.id) }}')"></i>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+<script>
+    function resetQuizProgress(event, url) {
+        event.stopPropagation();
+        event.preventDefault();
+        if (confirm("Сбросить прохождение викторины?")) {
+            window.location.href = url;
+        }
+    }
+</script>
+
+    <!-- Добавляем пагинацию только если страниц больше одной -->
+    {% if pagination.pages > 1 %}
+    <div class="mt-4">
+        <nav aria-label="Pagination">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('quizzes', page=pagination.prev_num) }}">Предыдущая</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Предыдущая</span>
+                    </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('quizzes', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('quizzes', page=pagination.next_num) }}">Следующая</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Следующая</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+
+</div>
+
+{% include 'login_script.html' %}
+
+<!-- CSS для оформления в стиле примерных страниц -->
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fa;
+    }
+
+    .container {
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    .card {
+        box-shadow: none;
+    }
+
+    h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: #fff;
+    }
+
+    .pagination .page-link {
+        color: #007bff;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+    }
+</style>
+
+{% endblock %}

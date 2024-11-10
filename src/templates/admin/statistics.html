@@ -1,0 +1,254 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<!-- Стили для страницы -->
+<style>
+    /* Основной стиль для страницы */
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: #333;
+    }
+
+    /* Стили для таблицы */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+        text-align: center;
+    }
+    table th, table td {
+        padding: 15px;
+        border: 1px solid #ddd;
+    }
+    table th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+    }
+    table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    table tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    /* Скрытые разделы */
+    .period-data {
+        display: none;
+    }
+
+    /* Отображение активного раздела */
+    .period-data.active {
+        display: table-row-group;
+    }
+
+    /* Дополнительные стили для карточек */
+    .card {
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    /* Стили для кнопок */
+    .period-buttons .btn {
+        margin: 5px 5px 5px 0;
+    }
+</style>
+
+<h1>Общая статистика</h1>
+
+<!-- Карточка для общих показателей -->
+<div class="card">
+    <table>
+        <tbody>
+            <tr>
+                <td>Общее количество пользователей</td>
+                <td>{{ total_users }}</td>
+            </tr>
+            <tr>
+                <td>Общее количество пользователей, игравших в викторину</td>
+                <td>{{ total_users_played_quiz }}</td>
+            </tr>
+            <tr>
+                <td>Общее количество пользователей, прошедших хотя бы одну викторину до конца</td>
+                <td>{{ total_users_completed_quiz }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Карточка для периодических данных -->
+<div class="card">
+    <div class="row">
+        <!-- Колонка для кнопок -->
+        <div class="col-md-3">
+            <!-- Кнопки для выбора периода -->
+            <div class="period-buttons">
+                <button class="btn btn-primary" id="btn-day">За день</button>
+                <button class="btn btn-secondary" id="btn-week">За неделю</button>
+                <button class="btn btn-secondary" id="btn-month">За месяц</button>
+            </div>
+        </div>
+        <!-- Колонка для таблицы -->
+        <div class="col-md-9">
+            <!-- Таблица со статистикой по периодам -->
+            <table>
+                <tbody id="period-day" class="period-data active">
+                    <tr>
+                        <td>Количество новых пользователей за последний день</td>
+                        <td>{{ new_users_last_day }}</td>
+                    </tr>
+                    <tr>
+                        <td>Пользователи, игравшие в викторину за последний день</td>
+                        <td>{{ users_played_quiz_last_day }}</td>
+                    </tr>
+                    <tr>
+                        <td>Пользователи, прошедшие викторину до конца за последний день</td>
+                        <td>{{ users_completed_quiz_last_day }}</td>
+                    </tr>
+                </tbody>
+
+                <tbody id="period-week" class="period-data">
+                    <tr>
+                        <td>Количество новых пользователей за последнюю неделю</td>
+                        <td>{{ new_users_last_week }}</td>
+                    </tr>
+                    <tr>
+                        <td>Пользователи, игравшие в викторину за последнюю неделю</td>
+                        <td>{{ users_played_quiz_last_week }}</td>
+                    </tr>
+                    <tr>
+                        <td>Пользователи, прошедшие викторину до конца за последнюю неделю</td>
+                        <td>{{ users_completed_quiz_last_week }}</td>
+                    </tr>
+                </tbody>
+
+                <tbody id="period-month" class="period-data">
+                    <tr>
+                        <td>Количество новых пользователей за последний месяц</td>
+                        <td>{{ new_users_last_month }}</td>
+                    </tr>
+                    <tr>
+                        <td>Пользователи, игравшие в викторину за последний месяц</td>
+                        <td>{{ users_played_quiz_last_month }}</td>
+                    </tr>
+                    <tr>
+                        <td>Пользователи, прошедшие викторину до конца за последний месяц</td>
+                        <td>{{ users_completed_quiz_last_month }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Карточка для остальных показателей -->
+<div class="card">
+    <table>
+        <tbody>
+            <tr>
+                <td>Всего пройдено викторин</td>
+                <td>{{ total_completed_quizzes }}</td>
+            </tr>
+            <tr>
+                <td>Всего отвечено вопросов</td>
+                <td>{{ total_questions_answered }}</td>
+            </tr>
+            <tr>
+                <td>Всего вопросов в базе</td>
+                <td>{{ total_questions }}</td>
+            </tr>
+            <tr>
+                <td>Всего викторин в базе</td>
+                <td>{{ total_quizzes }}</td>
+            </tr>
+            <tr>
+                <td>Всего рубрик в базе</td>
+                <td>{{ total_categories }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="mt-4 text-center">
+        <button id="exportButton" class="btn btn-success btn-lg">
+            Экспортировать пользователей в Excel
+        </button>
+    </div>
+</div>
+
+<!-- JavaScript для управления отображением данных -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnDay = document.getElementById('btn-day');
+        const btnWeek = document.getElementById('btn-week');
+        const btnMonth = document.getElementById('btn-month');
+
+        const periodDay = document.getElementById('period-day');
+        const periodWeek = document.getElementById('period-week');
+        const periodMonth = document.getElementById('period-month');
+
+        // Функция для скрытия всех периодов
+        function hideAllPeriods() {
+            [periodDay, periodWeek, periodMonth].forEach(period => {
+                period.classList.remove('active');
+            });
+            // Изменение стилей кнопок
+            [btnDay, btnWeek, btnMonth].forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+        }
+
+        // Обработчики событий для кнопок
+        btnDay.addEventListener('click', function() {
+            hideAllPeriods();
+            periodDay.classList.add('active');
+            btnDay.classList.remove('btn-secondary');
+            btnDay.classList.add('btn-primary');
+        });
+
+        btnWeek.addEventListener('click', function() {
+            hideAllPeriods();
+            periodWeek.classList.add('active');
+            btnWeek.classList.remove('btn-secondary');
+            btnWeek.classList.add('btn-primary');
+        });
+
+        btnMonth.addEventListener('click', function() {
+            hideAllPeriods();
+            periodMonth.classList.add('active');
+            btnMonth.classList.remove('btn-secondary');
+            btnMonth.classList.add('btn-primary');
+        });
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatId = Telegram.WebApp.initDataUnsafe.user.id; // Получаем chat_id
+    
+        document.getElementById('exportButton').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/admin/statistics/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ chat_id: chatId })
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Ошибка при экспорте данных');
+                }
+    
+                const data = await response.json();
+                alert(data.message);  // Успешно отправлено
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            }
+        });
+    });
+</script>
+
+{% endblock %}
